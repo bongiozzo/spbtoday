@@ -8,8 +8,7 @@
  *
  *
  * ToDo:
- * Add www.peterburg.ru as site
- * Banner Алиса это умеет
+ * Make this dialogue great with fellow programmers at the hackathon
  *
  */
 
