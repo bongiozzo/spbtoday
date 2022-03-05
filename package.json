@@ -1,0 +1,9 @@
+{
+  "name": "spbtoday",
+  "type": "module",
+  "version": "1.0.1",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "node-fetch": "^3.2.1"
+  }
+}

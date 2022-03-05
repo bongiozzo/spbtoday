@@ -12,8 +12,8 @@
  *
  */
 
- const fetch = require("node-fetch");
- const _ = require('lodash');
+ import fetch from "node-fetch";
+ import _ from 'lodash';
  
  function randAnswer(strings) {
      return strings[Math.floor(Math.random() * strings.length)]
@@ -169,40 +169,41 @@
      return (day < 10 ? '0' + day : day) + '.' + (month < 10 ? '0' + month : month);
  }
  
- module.exports.handler = async (event, context) => {
-     let {version, session, request, state} = event;
- 
-     console.log('Request: ' + JSON.stringify(request));
-     console.log('Session: ' + JSON.stringify(session));
-     console.log('State: ' + JSON.stringify(state));
- 
-     state = state && state['session'] ? state : {session: {}};
- 
-     let result = {
-         response: {
-             text: '',
-             buttons: [],
-             end_session: false,
-         },
-         session_state: {
-             storyday: state['session']['storyday'],
-             details: state['session']['details']
-         },
-         version: version
-     }
- 
-     if (request['nlu']['intents'].hasOwnProperty('story')) {
-         result.session_state['storyday'] = parseday(request['nlu']['intents']['story']['slots']['when']['value'])
-         return story(result)
-     } else if (session['new'] || request['nlu']['intents'].hasOwnProperty('welcome')) {
-         return welcome(result)
-     } else if (state['session']['details'] && request['nlu']['intents'].hasOwnProperty('details')) {
-         return storydetails(result)
-     } else if (request['nlu']['intents'].hasOwnProperty('end')) {
-         return endstory(result)
-     } else {
-         console.log('fallback(result)')
-         return fallback(result)
-     }
- };
- 
+ const handler = (event, context) => {
+    let {version, session, request, state} = event;
+
+    console.log('Request: ' + JSON.stringify(request));
+    console.log('Session: ' + JSON.stringify(session));
+    console.log('State: ' + JSON.stringify(state));
+
+    state = state && state['session'] ? state : {session: {}};
+
+    let result = {
+        response: {
+            text: '',
+            buttons: [],
+            end_session: false,
+        },
+        session_state: {
+            storyday: state['session']['storyday'],
+            details: state['session']['details']
+        },
+        version: version
+    }
+
+    if (request['nlu']['intents'].hasOwnProperty('story')) {
+        result.session_state['storyday'] = parseday(request['nlu']['intents']['story']['slots']['when']['value'])
+        return story(result)
+    } else if (session['new'] || request['nlu']['intents'].hasOwnProperty('welcome')) {
+        return welcome(result)
+    } else if (state['session']['details'] && request['nlu']['intents'].hasOwnProperty('details')) {
+        return storydetails(result)
+    } else if (request['nlu']['intents'].hasOwnProperty('end')) {
+        return endstory(result)
+    } else {
+        console.log('fallback(result)')
+        return fallback(result)
+    }
+}
+
+export { handler };
