@@ -42,13 +42,13 @@
          {
              id: 1,
              source: 'Петербургский календарь Панёвина',
-             url: 'http://api.panevin.ru/v1/?date=',
+             url: 'http://api.panevin.ru/v1/?date={2}',
              dataJson: {}
          },
          {
              id: 2,
              source: 'Библиотека Маяковского',
-             url: 'https://spbcult.ru/o/api/v1/memorable-day/story/date?date=',
+             url: 'http://51.250.108.106:8005/memorable_dates/date/day/{0}/month/{1}',
              dataJson: {}
          }
      ];
@@ -57,7 +57,7 @@
      sources.map((source) => {
          requests.push(
              new Promise((resolve, reject) => {
-                 console.log(`fetch - ${source.url + result.session_state['storyday']}`);
+                 console.log(`fetch - ${source.url}`,result.session_state['storyday']);
  
                  fetch(source.url + result.session_state['storyday'], {headers: {'Accept-Language': 'ru-RU,ru'}}).then((response) => {
                      return response.json();
@@ -69,7 +69,7 @@
                      console.log('There has been a problem with your fetch operation: ' + error.message);
                      resolve(source);
                  });
-             })
+            })
          );
      })
  
@@ -166,7 +166,7 @@
          month = yandexdate['month'];
      }
  
-     return (day < 10 ? '0' + day : day) + '.' + (month < 10 ? '0' + month : month);
+     return [day, month, (day < 10 ? '0' + day : day) + '.' + (month < 10 ? '0' + month : month)];
  }
  
  const handler = (event, context) => {
