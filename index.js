@@ -14,16 +14,16 @@
 
  import fetch from "node-fetch";
  import _ from 'lodash';
- 
+
  function randAnswer(strings) {
      return strings[Math.floor(Math.random() * strings.length)]
  }
- 
+
  async function fallback(result) {
      result.response.text = 'Мне непонятно, извините. Можете назвать день и месяц и я расскажу, что было в истории Санкт-Петербурга в этот день.';
      return result
  }
- 
+
  async function welcome(result) {
      result.response.text = ('Я могу рассказывать о примечательных датах, которые произошли в истории великого города. ' +
                              'Достаточно спросить: Скажи, что было в истории Санкт Петербурга сегодня?\n' +
@@ -36,30 +36,38 @@
      ];
      return result
  }
- 
+
  async function story(result) {
      let sources = [
          {
              id: 1,
              source: 'Петербургский календарь Панёвина',
-             url: 'http://api.panevin.ru/v1/?date={2}',
+             url: 'http://api.panevin.ru/v1/?date=',
              dataJson: {}
          },
          {
              id: 2,
              source: 'Библиотека Маяковского',
-             url: 'http://51.250.108.106:8005/memorable_dates/date/day/{0}/month/{1}',
+             url: 'http://51.250.108.106:8005/memorable_dates/date/day/',
              dataJson: {}
          }
      ];
- 
+
      let requests = [];
      sources.map((source) => {
          requests.push(
              new Promise((resolve, reject) => {
-                 console.log(`fetch - ${source.url}`,result.session_state['storyday']);
- 
-                 fetch(source.url + result.session_state['storyday'], {headers: {'Accept-Language': 'ru-RU,ru'}}).then((response) => {
+
+                 console.log(`enter: ${source.url} ${result.session_state['storyday']}`);
+
+                 var url = source.url + 
+                              (source.id === 2 ? 
+                              result.session_state['storyday'][0] + '/month/' + result.session_state['storyday'][1] : 
+                              result.session_state['storyday'][2]);
+
+                 console.log(`fetch result: ${url}`);
+
+                 fetch(url, {headers: {'Accept-Language': 'ru-RU,ru'}}).then((response) => {
                      return response.json();
                  }).then((dataJson) => {
                      console.log('Day Data: ' + JSON.stringify(dataJson));
@@ -72,7 +80,7 @@
             })
          );
      })
- 
+
      await Promise.all(requests)
          .then(result => {
              if (result && result.length > 0) {
@@ -80,61 +88,76 @@
              }
          })
          .catch(error => console.log(`Exception when get responses from sources API - ${error.message}`));
- 
+
      _.remove(sources, function (source) {
          return _.isEmpty(source.dataJson);
      });
- 
+
      if (_.isEmpty(sources)) {
          console.log("No data from sources!")
          return fallback(result);
      }
- 
+
+     sources.forEach((value) => {
+        
+        console.log('Value before: ' + JSON.stringify(value));
+        
+        if (value.id === 2) {
+           value.dataJson = value.dataJson[0];
+           var datemap = value.dataJson.date.split('-'); // change!
+           value.dataJson.date = datemap[2] + '.' + datemap[1] + '.' + datemap[0];
+           value.dataJson.text = value.dataJson.description;
+        }
+
+        console.log('Value after: ' + JSON.stringify(value));
+
+     });
+
      //sorce text length ascending
      sources = _.sortBy(sources, [(source)=> source.dataJson.text.length]);
- 
+
      var phrase = '';
      result.response.tts = '';
      sources.forEach((value) => {
-         value.dataJson.text = value.dataJson.text.replace(/<[^>]*>?/gm, '').substring(0, 1000);
-         phrase = value.dataJson.date + randAnswer([' произошло вот что...\n', ' было вот что...\n', ' случилось такое событие...\n']) +
-             value.dataJson.title + '.\n\n' +
-             'Источник: ' + value.source + '. ' + '\n\n';
-         result.response.text += phrase;
-         phrase = phrase.replace('...\n', '... sil <[1000]>\n');
-         result.response.tts += phrase + ' sil <[1500]> ';
+        value.dataJson.text = value.dataJson.text.replace(/<[^>]*>?/gm, '').substring(0, 950);
+        phrase = value.dataJson.date + randAnswer([' произошло вот что...\n', ' было вот что...\n', ' случилось такое событие...\n']) +
+                 value.dataJson.title + '.\n\n' +
+                 'Источник: ' + value.source + '. ' + '\n\n';
+        result.response.text += phrase;
+        phrase = phrase.replace('...\n', '... sil <[1000]>\n');
+        result.response.tts += phrase + ' sil <[1500]> ';
      });
- 
+
      phrase = randAnswer(['Нужны подробности? Скажите Подробнее!\n\n', 'Скажите Подробнее, если интересны детали...\n\n']) +
               randAnswer(['Если нужна другая дата - Назовите её...', 'Или назовите другую дату...']);
      result.response.text += phrase;
-     result.response.tts += phrase; 
- 
+     result.response.tts += phrase;
+
      result.response.buttons = [{title: 'Подробнее', hide: true}];
- 
+
      result.session_state['details'] = sources;
- 
+
      return result
  }
- 
+
  async function storydetails(result) {
      if (!result.session_state['details'] || !result.session_state['details'][0]) {
          return fallback(result)
      }
- 
+
      result.response.text = result.session_state['details'][0]['dataJson']['text'] + '.\n\n'
- 
+
      if (result.session_state['details'].length > 1) {
          result.response.text += randAnswer(['Скажите Ещё, чтобы услышать следующую историю.', 'Скажите Продолжить, чтобы услышать следующую историю.', 'Рассказать еще?']);
- 
+
          result.response.buttons = [
              {title: 'Еще', hide: true},
          ];
- 
+
      } else {
- 
+
        result.response.text += randAnswer(['Если нужна другая дата - Назовите её.', 'Назовите другую дату.']);
- 
+
        result.response.buttons = [
          {title: 'Завтра', hide: true},
          {title: 'Хватит', hide: true},
@@ -143,19 +166,19 @@
      result.session_state['details'].shift();
      return result;
  }
- 
+
  async function endstory(result) {
      result.response.text = randAnswer(['До свидания!', 'До новых встреч!']);
      result.response.end_session = true;
      return result
  }
- 
+
  function parseday(yandexdate) {
- 
+
      console.log('Date recieved: ' + JSON.stringify(yandexdate));
- 
+
      var day, month;
- 
+
      if (yandexdate['day_is_relative']) {
          var resultday = new Date();
          resultday.setDate(resultday.getDate() + yandexdate['day']);
@@ -165,10 +188,10 @@
          day = yandexdate['day'];
          month = yandexdate['month'];
      }
- 
+
      return [day, month, (day < 10 ? '0' + day : day) + '.' + (month < 10 ? '0' + month : month)];
  }
- 
+
  const handler = (event, context) => {
     let {version, session, request, state} = event;
 
