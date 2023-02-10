@@ -48,7 +48,7 @@
          {
              id: 2,
              source: 'Библиотека Маяковского',
-             url: 'http://51.250.108.106:8005/memorable_dates/date/day/',
+             url: 'http://84.201.142.84:8005/memorable_dates/date/day/',
              dataJson: {}
          }
      ];
@@ -104,7 +104,7 @@
         
         if (value.id === 2) {
            value.dataJson = value.dataJson[0];
-           var datemap = value.dataJson.date.split('-'); // change!
+           var datemap = value.dataJson.date.split('-');
            value.dataJson.date = datemap[2] + '.' + datemap[1] + '.' + datemap[0];
            value.dataJson.text = value.dataJson.description;
         }
@@ -120,7 +120,7 @@
      result.response.tts = '';
      sources.forEach((value) => {
         value.dataJson.text = value.dataJson.text.replace(/<[^>]*>?/gm, '').substring(0, 950);
-        phrase = value.dataJson.date + randAnswer([' произошло вот что...\n', ' было вот что...\n', ' случилось такое событие...\n']) +
+        phrase = value.dataJson.date + randAnswer([', произошло вот что...\n', ' было вот что...\n', ' случилось такое событие...\n']) +
                  value.dataJson.title + '.\n\n' +
                  'Источник: ' + value.source + '. ' + '\n\n';
         result.response.text += phrase;
