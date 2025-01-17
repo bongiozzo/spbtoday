@@ -48,7 +48,7 @@
          {
              id: 2,
              source: 'Библиотека Маяковского',
-             url: 'http://84.201.142.84:8005/memorable_dates/date/day/',
+             url: 'https://yazzh.gate.petersburg.ru/memorable_dates/skills/date/day/',
              dataJson: {}
          }
      ];
@@ -102,12 +102,11 @@
         
         console.log('Value before: ' + JSON.stringify(value));
         
-        if (value.id === 2) {
-           value.dataJson = value.dataJson[0];
-           var datemap = value.dataJson.date.split('-');
-           value.dataJson.date = datemap[2] + '.' + datemap[1] + '.' + datemap[0];
-           value.dataJson.text = value.dataJson.description;
-        }
+        // if (value.id === 2) {
+        //    value.dataJson = value.dataJson[0];
+        //    value.dataJson = value.dataJson.date;
+        //    value.dataJson.text = value.dataJson.description;
+        // }
 
         console.log('Value after: ' + JSON.stringify(value));
 
